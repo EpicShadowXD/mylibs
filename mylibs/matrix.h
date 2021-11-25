@@ -8,7 +8,7 @@ public:
 	T** data;
 
 public:
-	matrix() { col = row = 0; data = nullptr; }	// Wanted to declare outside but doesn't want to work for some odd reason
+	matrix() { col = row = 0; data = NULL; }	// Wanted to declare outside but doesn't want to work for some odd reason
 	matrix(int column, int row);
 	matrix(const matrix& _array);					// Copy constructor
 	~matrix();
@@ -20,6 +20,7 @@ public:
 	matrix operator + (const matrix& right);
 	matrix operator - (const matrix& right);
 	matrix operator * (const matrix& right);
+	T*& operator [] (int value);
 };
 
 // Beginning of declaration of constructors
@@ -138,5 +139,10 @@ template <typename T> matrix<T> matrix<T> :: operator * (const matrix& right)
 		for (size_t j = 0; j < row; j++)
 			data[i][j] *= right.data[i][j];
 	return *this;
+}
+
+template <typename T> T*& matrix<T> :: operator [] (unsigned index)
+{
+    return data[index];
 }
 // End of declaration of operator overloading
