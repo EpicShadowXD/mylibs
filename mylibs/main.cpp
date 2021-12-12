@@ -1,19 +1,28 @@
 #include <iostream>
 #include <vector>
-#include "matrix.h"
+#include "matrix.cpp"
 
 using namespace std;
 
+void output(matrix<int>::iterator it)
+{
+    std::cout << *it << ' ';
+    ++it;
+    std::cout << *it << '\n';
+}
+
 int main()
 {
-
     matrix<int> myMatrix(2, 2);
 
-    myMatrix[0][0] = 2; myMatrix[0][1] = 3;
-    myMatrix[1][0] = 4; myMatrix[1][1] = 5;
+    myMatrix[0][0] = 1; myMatrix[0][1] = 2;
+    myMatrix[1][0] = 3; myMatrix[1][1] = 4;
+    
+    matrix<int>::iterator it = nullptr;
+    
+    it = myMatrix.row_begin(0);
+    output(it);
 
-    matrix<int>::iterator it = myMatrix.row_end(0);
-    std::cout << *it << ' ';
-    it -= 1;
-    std::cout << *it;
+    it = myMatrix.row_begin(1);
+    output(it);
 }
