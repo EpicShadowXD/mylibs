@@ -7,25 +7,15 @@ using ll = unsigned long long;	// Hotfix for potential loss of data warning
 // TO-DO: create size method/ subclass to differentiate between "user used" size and "memory allocated" size
 template <typename Type> class matrix
 {
-protected:
-	ll numberOfColumns, numberOfRows;
-	Type** data;
-
 public:
 	class iterator
 	{
-	protected:
-		ll stride = NULL;
-		Type* pointer;
-
 	public:
-		iterator() : pointer(nullptr) {}
+		iterator() : pointer(nullptr), stride(NULL), data(nullptr), columnReferences(new Type& [numberOfRows]) {}
 		iterator(Type* ptr);
 
-		// Dereference operator
 		Type& operator * ();
 
-		// Attribute operator
 		Type* operator = (const iterator&);
 
 		// Prefix
@@ -36,17 +26,19 @@ public:
 		iterator operator ++ (Type);
 		iterator operator -- (Type);
 
-		// Increment/ decrement by value
-		Type& operator += (Type);
-		Type& operator -= (Type);
+		Type& operator += (const Type);
+		Type& operator -= (const Type);
 
-		// Compare - to fix
-		inline bool operator == (const iterator&);
-		inline bool operator != (const iterator&);
+		bool operator == (const iterator&);
+		bool operator != (const iterator&);
+
+	protected:
+		ll stride;
+		Type* pointer;
 	};
 
-	// Constructors and destructors
-	matrix();
+public:
+	matrix() : numberOfColumns(NULL), numberOfRows(NULL), data(nullptr) {}
 	matrix(ll, ll);
 	matrix(const matrix&);					// Copy constructor
 	~matrix();
@@ -58,18 +50,15 @@ public:
 	Type*& operator [] (ll value);
 
 	// Arithmetic
-	// Note: does operations relative to the implied matrix's dimensions,
-	//		meaning that the elements from a bigger matrix outside the scope
-	//		of the implied matrix do not get touched. (potential logic error)
+	// Note: does operations relative to the implied matrix's dimensions, meaning
+	//		that the elements from a bigger matrix outside the scope of the implied
+	//		matrix do not get touched (potential silent runtime error).
 	matrix operator += (const matrix&);
 	matrix operator -= (const matrix&);
-	matrix operator *= (const matrix&);
+
 	matrix operator + (const matrix&);
 	matrix operator - (const matrix&);
-	matrix operator * (const matrix&);
 
-	// I want to get declaration outside the class but this fucking shit ass
-	// fucking programming language won't fucking let me. I am so fucking mad.
 	template <typename Type> friend std::ostream& operator << (std::ostream&, const matrix<Type>&);
 	template <typename Type> friend std::istream& operator >> (std::istream&, matrix<Type>&);
 
@@ -87,13 +76,14 @@ public:
 	void append(matrix& right);	// Concatenate two matrixes
 
 	// Methods for iterators | Too lazy to implement exception handling rn
+	const ll row_size();
+	const ll col_size();
+
 	Type* row_begin(const ll index);
 	Type* row_end(const ll index);
 
-	Type* col_begin(const ll index);
-	Type* col_end(const ll index);
-
-	// Size
-	ll row_size(const ll index);
-	ll col_size(const ll index);
+protected:
+	ll numberOfColumns, numberOfRows;
+	Type** data;
+	Type* columnReferences;
 };
