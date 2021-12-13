@@ -4,25 +4,28 @@
 
 using namespace std;
 
-void output(matrix<int>::iterator it)
+void output(matrix<int>::iterator& it, int n)
 {
-    std::cout << *it << ' ';
-    ++it;
-    std::cout << *it << '\n';
+    for (int i = 0; i < n; ++i)
+    {
+        std::cout << *it << ' ';
+        it++;
+    } std::cout << std::endl;
 }
 
 int main()
 {
-    matrix<int> myMatrix(2, 2);
+    matrix<int> myMatrix(3, 3);
 
-    myMatrix[0][0] = 1; myMatrix[0][1] = 2;
-    myMatrix[1][0] = 3; myMatrix[1][1] = 4;
+    myMatrix[0][0] = 1; myMatrix[0][1] = 2; myMatrix[0][2] = 7;
+    myMatrix[1][0] = 3; myMatrix[1][1] = 4; myMatrix[1][2] = 8;
+    myMatrix[2][0] = 5; myMatrix[2][1] = 6; myMatrix[2][2] = 9;
     
     matrix<int>::iterator it = nullptr;
-    
-    it = myMatrix.row_begin(0);
-    output(it);
 
-    it = myMatrix.row_begin(1);
-    output(it);
+    for (int i = 0; i < myMatrix.col_size(); ++i)
+    {
+        it = myMatrix.row_begin(i);
+        output(it, myMatrix.row_size());
+    }
 }
