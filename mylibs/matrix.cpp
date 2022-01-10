@@ -1,8 +1,7 @@
 #include "matrix.h"
-#include <iostream>
 
 // <constructor>
-template <typename Type> matrix<Type> ::matrix(ll _numberOfColumns, ll _numberOfRows)
+template <typename Type> matrix<Type> ::matrix(const ll _numberOfColumns, const ll _numberOfRows)
 {
 	// Copy numberOfColumns and numberOfRows into this
 	numberOfColumns = _numberOfColumns;
@@ -17,12 +16,16 @@ template <typename Type> matrix<Type> ::matrix(ll _numberOfColumns, ll _numberOf
 	for (size_t i = 0; i < numberOfColumns; i++)
 		for (size_t j = 0; j < numberOfRows; j++)
 			data[i][j] = 0;
+
+	columnVector = new Type[numberOfRows];
+	for (size_t i = 0; i < numberOfRows; i++)
+		columnVector[i] = 0;
 }
 
-template <typename Type> matrix<Type> ::matrix(const matrix& _array)
+template <typename Type> matrix<Type> ::matrix(const matrix& _matrix)
 {
-	numberOfColumns = _array.numberOfColumns;
-	numberOfRows = _array.numberOfRows;
+	numberOfColumns = _matrix.numberOfColumns;
+	numberOfRows = _matrix.numberOfRows;
 
 	// Not making a function for this, sometimes copy-paste is fine
 	data = (Type**) new Type * [numberOfColumns];
@@ -32,14 +35,21 @@ template <typename Type> matrix<Type> ::matrix(const matrix& _array)
 	// Copy values over
 	for (size_t i = 0; i < numberOfColumns; i++)
 		for (size_t j = 0; j < numberOfRows; j++)
-			data[i][j] = _array.data[i][j];
+			data[i][j] = _matrix.data[i][j];
+
+	columnVector = new Type[numberOfRows];
+	for (size_t i = 0; i < numberOfRows; i++)
+		columnVector[i] = _matrix.columnVector[i];
 }
 
 template <typename Type> matrix<Type> :: ~matrix()
 {
 	if (numberOfRows)
+	{
 		for (size_t i = 0; i < numberOfColumns; i++)
 			delete[] data[i];
+		delete[] columnVector;
+	}
 	if (numberOfColumns)
 		delete[] data;
 }
@@ -48,10 +58,12 @@ template <typename Type> matrix<Type> :: ~matrix()
 // <operator overload>
 template <typename Type> matrix<Type> matrix<Type> :: operator = (const matrix& other)
 {
-	// Free memory through destructor
 	if (numberOfRows)
+	{
 		for (size_t i = 0; i < numberOfColumns; i++)
 			delete[] data[i];
+		delete[] columnVector;
+	}
 	if (numberOfColumns)
 		delete[] data;
 
@@ -68,45 +80,35 @@ template <typename Type> matrix<Type> matrix<Type> :: operator = (const matrix& 
 	for (size_t i = 0; i < numberOfColumns; i++)
 		for (size_t j = 0; j < numberOfRows; j++)
 			data[i][j] = other.data[i][j];
+
+	columnVector = new Type[numberOfRows];
+	for (size_t i = 0; i < numberOfRows; i++)
+		columnVector[i] = other.columnVector[i];
+
 	return *this;
 }
 
 template <typename Type> matrix<Type> matrix<Type> :: operator += (const matrix& right)
 {
-	for (size_t i = 0; i < numberOfColumns; i++)
-		for (size_t j = 0; j < numberOfRows; j++)
+	for (size_t i = 0; i < std::min(numberOfColumns, right.numberOfColumns); i++)
+		for (size_t j = 0; j < std::min(numberOfRows, right.numberOfRows); j++)
 			data[i][j] += right.data[i][j];
 	return *this;
 }
 
 template <typename Type> matrix<Type> matrix<Type> :: operator -= (const matrix& right)
 {
-	for (size_t i = 0; i < numberOfColumns; i++)
-		for (size_t j = 0; j < numberOfRows; j++)
+	for (size_t i = 0; i < std::min(numberOfColumns, right.numberOfColumns); i++)
+		for (size_t j = 0; j < std::min(numberOfRows, right.numberOfRows); j++)
 			data[i][j] -= right.data[i][j];
 	return *this;
 }
 
-template <typename Type> matrix<Type> matrix<Type> :: operator + (const matrix& right)
-{
-	for (size_t i = 0; i < numberOfColumns; i++)
-		for (size_t j = 0; j < numberOfRows; j++)
-			data[i][j] += right.data[i][j];
-	return *this;
-}
+template <typename Type> matrix<Type> matrix<Type> :: operator + (matrix& right) { *this += right; return *this; }
 
-template <typename Type> matrix<Type> matrix<Type> :: operator - (const matrix& right)
-{
-	for (size_t i = 0; i < numberOfColumns; i++)
-		for (size_t j = 0; j < numberOfRows; j++)
-			data[i][j] -= right.data[i][j];
-	return *this;
-}
+template <typename Type> matrix<Type> matrix<Type> :: operator - (matrix& right) { *this -= right; return *this; }
 
-template <typename Type> Type*& matrix<Type> :: operator [] (ll const index)
-{
-	return data[index];
-}
+template <typename Type> Type*& matrix<Type> :: operator [] (const ll index) { return data[index]; }
 
 template <typename Type> std::ostream& operator << (std::ostream& out, const matrix<Type>& other)
 {
@@ -128,11 +130,33 @@ template <typename Type> std::istream& operator >> (std::istream& in, matrix<Typ
 // </operator overload>
 
 // <methods>
-template <typename Type> const ll matrix<Type> ::row_size() { return numberOfColumns; }
-template <typename Type> const ll matrix<Type> ::col_size() { return numberOfRows; }
+template <typename Type> const ll matrix<Type> ::getRowSize() { return numberOfRows; }
+template <typename Type> const ll matrix<Type> ::getColSize() { return numberOfColumns; }
 
-template <typename Type> Type* matrix<Type> ::row_begin(const ll index) { return data[index]; }
-template <typename Type> Type* matrix<Type> ::row_end(const ll index) { return data[index] + numberOfColumns; }
+template <typename Type> Type* matrix<Type> ::rowBegin(const ll index) { return data[index]; }
+template <typename Type> Type* matrix<Type> ::rowEnd(const ll index) { return data[index] + numberOfColumns; }
+
+template <typename Type> Type* matrix<Type> ::colBegin(const ll index)
+{
+	for (size_t i = 0; i < numberOfColumns; i++)
+		columnVector[i] = (Type&)data[i][index];	// I have no idea why this works
+	return columnVector;
+}
+
+template <typename Type> Type* matrix<Type> ::colEnd(const ll index)
+{
+	for (size_t i = 0; i < numberOfColumns; i++)
+		columnVector[i] = (Type&)data[i][index];
+	return columnVector + numberOfColumns;
+}
+
+template <typename Type> void matrix<Type> ::resize(const ll newColSize, const ll newRowSize)
+{
+	// Pass over numberOfColumns and numberOfRows
+	numberOfColumns = newColSize;
+	numberOfRows = newRowSize;
+	return;
+}
 // </methods>
 
 // <iterator>
