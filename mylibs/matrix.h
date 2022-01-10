@@ -1,11 +1,37 @@
 #pragma once
 #include <iostream>
+#include <functional>
+#include <tuple>
 
-// Hotfix for potential loss of data warning
+// Will never use negative numbers for matrix size
 using ll = unsigned long long;
 
-// TO-DO: create refference wrapper class
-// TO-DO: create size method/ subclass to differentiate between "user used" size and "memory allocated" size
+// Use tuple of storage space 1 instead of vector cuz 
+// I won't allow myself to use #include <vector> ever
+// in this project.
+template <typename Type> class refWrapper
+{
+private:
+	std::tuple<Type&> storage;
+
+public:
+	// Default constructor cuz std::reference_wrapper doesn't have one
+	refWrapper() : storage(nullptr) {}
+
+	// Constructor which takes as a parameter rvalue Type storage
+	refWrapper(Type&& value) : storage(value) {}
+
+	// Assign referenced value
+	Type operator = (const Type index) { return std::get<0>(storage) = index; }
+
+	// Type cast to Type&
+	operator Type& () { return std::get<0>(storage); }
+
+	decltype(&std::get<0>(storage)) operator & () { return &std::get<0>(storage); }
+};
+
+// TO-DO: create size method/ subclass to differentiate 
+// between "user used" size and "memory allocated" size
 template <typename Type> class matrix
 {
 public:
@@ -43,7 +69,7 @@ public:
 	matrix(const matrix&);					// Copy constructor
 	~matrix();
 
-	// Attribution
+	// Copy operator
 	matrix operator = (const matrix&);
 
 	// Hides data subcategory and can access data directly through instance
@@ -60,21 +86,22 @@ public:
 	matrix operator + (matrix&);
 	matrix operator - (matrix&);
 
-	// Algebra - TODO
-	matrix operator + (const double scalar);
-	matrix operator - (const double scalar);
-	matrix operator * (const double scalar);
+	matrix operator + (const Type);
+	matrix operator - (const Type);
+	matrix operator * (const Type);
+	matrix operator / (const Type);
 
-	matrix operator += (const double scalar);
-	matrix operator -= (const double scalar);
-	matrix operator *= (const double scalar);
+	matrix operator += (const Type);
+	matrix operator -= (const Type);
+	matrix operator *= (const Type);
+	matrix operator /= (const Type);
 
-	// Iostream output
 	template <typename Type> friend std::ostream& operator << (std::ostream&, const matrix<Type>&);
 	template <typename Type> friend std::istream& operator >> (std::istream&, matrix<Type>&);
 
 	// TO-DO!
 	// Memory management
+	void fill(matrix& other, Type value);
 	void resize(const ll numberOfColumns, const ll numberOfRows);	// Keeps memory, just destroys elements
 	void resize(const ll numberOfColumns, const ll numberOfRows, double value);	// Initialize potential new empty spaces with value
 	void shrink_to_fit();											// Frees up unused memory defined as all 0s on a row or column
@@ -96,7 +123,12 @@ public:
 	Type* colBegin(const ll index);
 	Type* colEnd(const ll index);
 
-protected:
+private:
+	void allocate(matrix&, ll, ll);
+	void deallocate(matrix&, ll, ll);
+	void copy(matrix&, const matrix, ll, ll);
+
+private:
 	ll numberOfColumns, numberOfRows;
 	Type** data;
 	Type* columnVector;
