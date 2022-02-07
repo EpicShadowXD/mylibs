@@ -1,51 +1,35 @@
 #pragma once
 #include <iostream>
-#include <functional>
-#include <tuple>
+#include <stdexcept>
 
 // Will never use negative numbers for matrix size
 using ll = unsigned long long;
 
-// Use tuple of storage space 1 instead of vector cuz 
-// I won't allow myself to use #include <vector> ever
-// in this project.
-template <typename Type> class refWrapper
-{
-private:
-	std::tuple<Type&> storage;
-
-public:
-	// Default constructor cuz std::reference_wrapper doesn't have one
-	refWrapper() : storage(nullptr) {}
-
-	// Constructor which takes as a parameter rvalue Type storage
-	refWrapper(Type&& value) : storage(value) {}
-
-	// Assign referenced value
-	Type operator = (const Type index) { return std::get<0>(storage) = index; }
-
-	// Type cast to Type&
-	operator Type& () { return std::get<0>(storage); }
-
-	decltype(&std::get<0>(storage)) operator & () { return &std::get<0>(storage); }
-};
-
-// TO-DO: create size method/ subclass to differentiate 
+// TODO: create size method/ subclass to differentiate 
 // between "user used" size and "memory allocated" size
 template <typename Type> class matrix
 {
+// Iterator
 public:
 	class iterator
 	{
+	protected:
+		Type* pointer;
+
 	public:
 		iterator() : pointer(nullptr) {}
 		iterator(Type* ptr);
 
 		Type& operator * ();
+		//Type&& operator * ();
 
 		Type* operator = (const iterator&);
+		Type* operator = (Type**);
 
 		// Prefix
+		Type& operator + (Type);
+		Type& operator - (Type);
+
 		Type& operator ++ ();
 		Type& operator -- ();
 
@@ -58,15 +42,26 @@ public:
 
 		bool operator == (const iterator&);
 		bool operator != (const iterator&);
-
-	protected:
-		Type* pointer;
 	};
 
+// Matrix
+private:
+	ll numberOfColumns, numberOfRows;
+	Type** data;
+
 public:
+	Type** columnVector;
+
+public:
+
 	matrix() :	numberOfColumns(NULL), numberOfRows(NULL), data(nullptr), columnVector(nullptr) {}
 	matrix(const ll, const ll);
-	matrix(const matrix&);					// Copy constructor
+	matrix(const matrix& other);
+	//matrix(const matrix& other) :	numberOfColumns { other.numberOfColumns },
+									//numberOfRows { other.numberOfRows }
+									//{ allocate(*this, numberOfColumns, numberOfRows);
+									//copy(*this, other, numberOfColumns, numberOfRows); } // Copy constructor
+	
 	~matrix();
 
 	// Copy operator
@@ -99,37 +94,41 @@ public:
 	template <typename Type> friend std::ostream& operator << (std::ostream&, const matrix<Type>&);
 	template <typename Type> friend std::istream& operator >> (std::istream&, matrix<Type>&);
 
-	// TO-DO!
+	// TODO
 	// Memory management
-	void fill(matrix& other, Type value);
+	void fill(matrix&, const Type);
 	void resize(const ll numberOfColumns, const ll numberOfRows);	// Keeps memory, just destroys elements
-	void resize(const ll numberOfColumns, const ll numberOfRows, double value);	// Initialize potential new empty spaces with value
+	void resize(const ll numberOfColumns, const ll numberOfRows, const Type value);	// Initialize potential new empty spaces with value
 	void shrink_to_fit();											// Frees up unused memory defined as all 0s on a row or column
 	void erase(const ll colIndex, const ll rowIndex);
 	void erase(const ll firstColIndex, const ll firstRowIndex,
 		const ll secondColIndex, const ll secondRowIndex);
 	void insert(const ll colIndex, const ll rowIndex);				// Requires automatic reallocation of memory; also don'Type forget to implement bounds check
 	void at(const ll colIndex, const ll rowIndex);					// Again, don't forget to implement bounds check
-	void reserve(ll n);
+	void reserve(const ll);
 	void swap(matrix& right);
 
 	// Methods for iterators
 	const ll getRowSize();
 	const ll getColSize();
 
-	Type* rowBegin(const ll index);
-	Type* rowEnd(const ll index);
+	const Type* matrixBegin();
+	const Type* matrixEnd();
 
-	Type* colBegin(const ll index);
-	Type* colEnd(const ll index);
+	Type* rowBegin(const ll);
+	Type* rowEnd(const ll);
+
+	Type** colBegin(const ll);
+	Type** colEnd(const ll);
 
 private:
+	// Currently used
+	Type** allocateMatrix(ll, ll);
+	Type** allocateColumnVector(ll);
+
+	void deallocateMatrix(matrix&, ll, ll);
+
+	// Should be deprecated
 	void allocate(matrix&, ll, ll);
 	void deallocate(matrix&, ll, ll);
-	void copy(matrix&, const matrix, ll, ll);
-
-private:
-	ll numberOfColumns, numberOfRows;
-	Type** data;
-	Type* columnVector;
 };
